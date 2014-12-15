@@ -5,7 +5,7 @@ require 'guard/kitchen/version'
 
 Gem::Specification.new do |spec|
   spec.name          = "guard-kitchen"
-  spec.version       = Guard::Kitchen::VERSION
+  spec.version       = "0.0.4"
   spec.authors       = ["Adam Jacob"]
   spec.email         = ["adam@opscode.com"]
   spec.description   = %q{Guard plugin for test kitchen}
