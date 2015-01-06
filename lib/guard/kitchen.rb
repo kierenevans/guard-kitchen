@@ -14,8 +14,7 @@
 # limitations under the License.
 #
 
-require "guard"
-require "guard/plugin"
+require "guard/compat/plugin"
 require "mixlib/shellout"
 
 module Guard
