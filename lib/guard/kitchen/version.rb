@@ -1,7 +1,5 @@
-require "guard/compat/plugin"
-
 module Guard
-  class Kitchen < Plugin
+  class Kitchen
     VERSION = "0.0.4"
   end
 end
