@@ -19,6 +19,7 @@ Gem::Specification.new do |spec|
   spec.require_paths = ["lib"]
 
   spec.add_dependency "guard"
+  spec.add_dependency "guard-compat", "~> 1.0"
   spec.add_dependency "mixlib-shellout"
   spec.add_development_dependency "bundler", "~> 1.3"
   spec.add_development_dependency "rake"
