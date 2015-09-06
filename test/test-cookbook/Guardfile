@@ -1,4 +1,4 @@
-guard :kitchen, concurrency_level: 1, destroy_on_reload: false, destroy_on_exit: false do
+guard :kitchen, concurrency_level: 2, non_concurrent_stages: [], destroy_on_reload: false, destroy_on_exit: true do
   watch(%r{^attributes/(.+)\.rb$})
   watch(%r{^definitions/(.+)\.rb$})
   watch(%r{^files/(.+)})
