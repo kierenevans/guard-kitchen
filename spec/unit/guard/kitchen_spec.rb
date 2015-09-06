@@ -6,6 +6,9 @@ describe 'Guard::Kitchen' do
   before do
     allow(::Guard::UI).to receive(:info)
     allow(::Guard::Notifier).to receive(:notify)
+
+    @config = instance_double('::Kitchen::Config')
+    allow(::Kitchen::Config).to receive(:new).and_return(@config)
   end
 
   context 'default parameters' do
@@ -17,14 +20,9 @@ describe 'Guard::Kitchen' do
       before do
         allow(::Kitchen).to receive(:default_file_logger).and_return('foo')
 
-        @config = instance_double('::Kitchen::Config')
-        allow(::Kitchen::Config).to receive(:new).and_return(@config)
-
         @action = instance_double('::Kitchen::Command::Action')
         allow(@action).to receive(:call)
-        allow(::Kitchen::Command::Action).to receive(:new)
-          .with(['.*'], {concurrency: 1}, action: 'create', config: @config, shell: nil)
-          .and_return(@action)
+        allow(::Kitchen::Command::Action).to receive(:new).and_return(@action)
       end
 
       it 'should ask for a new kitchen configuration' do
@@ -82,14 +80,9 @@ describe 'Guard::Kitchen' do
 
     describe '#stop' do
       before do
-        @config = instance_double('::Kitchen::Config')
-        allow(::Kitchen::Config).to receive(:new).and_return(@config)
-
         @action = instance_double('::Kitchen::Command::Action')
         allow(@action).to receive(:call)
-        allow(::Kitchen::Command::Action).to receive(:new)
-          .with(['.*'], {concurrency: 1}, action: 'destroy', config: @config, shell: nil)
-          .and_return(@action)
+        allow(::Kitchen::Command::Action).to receive(:new).and_return(@action)
       end
 
       it 'should log that it is stopping' do
@@ -143,14 +136,9 @@ describe 'Guard::Kitchen' do
       before do
         allow(::Kitchen).to receive(:default_file_logger).and_return('foo')
 
-        @config = instance_double('::Kitchen::Config')
-        allow(::Kitchen::Config).to receive(:new).and_return(@config)
-
         @action = instance_double('::Kitchen::Command::Action')
         allow(@action).to receive(:call)
-        allow(::Kitchen::Command::Action).to receive(:new)
-          .with(['.*'], {concurrency: 1}, action: 'create', config: @config, shell: nil)
-          .and_return(@action)
+        allow(::Kitchen::Command::Action).to receive(:new).and_return(@action)
       end
 
       it 'should not call stop' do
@@ -166,14 +154,9 @@ describe 'Guard::Kitchen' do
 
     describe '#run_all' do
       before do
-        @config = instance_double('::Kitchen::Config')
-        allow(::Kitchen::Config).to receive(:new).and_return(@config)
-
         @action = instance_double('::Kitchen::Command::Action')
         allow(@action).to receive(:call)
-        allow(::Kitchen::Command::Action).to receive(:new)
-          .with(['.*'], {concurrency: 1}, action: 'verify', config: @config, shell: nil)
-          .and_return(@action)
+        allow(::Kitchen::Command::Action).to receive(:new).and_return(@action)
       end
 
       it 'should log that it is verifying' do
@@ -225,9 +208,6 @@ describe 'Guard::Kitchen' do
 
     describe '#run_on_changes' do
       before do
-        @config = instance_double('::Kitchen::Config')
-        allow(::Kitchen::Config).to receive(:new).and_return(@config)
-
         @action = instance_double('::Kitchen::Command::Action')
         allow(@action).to receive(:call)
         allow(::Kitchen::Command::Action).to receive(:new).and_return(@action)
