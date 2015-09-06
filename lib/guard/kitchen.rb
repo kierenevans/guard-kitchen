@@ -26,7 +26,9 @@ module Guard
       super
 
       @options = {
-        concurrency_level: 4
+        concurrency_level: 4,
+        destroy_on_reload: false,
+        destroy_on_exit: true
       }.merge(options)
     end
 
@@ -46,6 +48,12 @@ module Guard
 
     def stop
       ::Guard::UI.info("Guard::Kitchen is stopping")
+      unless @options[:destroy_on_exit]
+        ::Guard::UI.info("Guard::Kitchen is skipping the destroy step")
+        Notifier.notify('Kitchen destroy skipped', :title => 'test-kitchen', :image => :success)
+        return
+      end
+
       begin
         ::Kitchen::Command::Action.new([], {concurrency: @options[:concurrency_level]}, action: 'destroy', config: @config, shell: nil).call
         Notifier.notify('Kitchen destroyed', :title => 'test-kitchen', :image => :success)
@@ -57,7 +65,7 @@ module Guard
     end
 
     def reload
-      stop
+      stop if @options[:destroy_on_reload]
       start
     end
 
@@ -81,6 +89,7 @@ module Guard
           suites[$1] = true
         end
         if path =~ %r{\.kitchen.*\.yml}
+          ::Guard::UI.info("Guard::Kitchen is using the new kitchen configuration")
           @config = ::Kitchen::Config.new
         end
       end
