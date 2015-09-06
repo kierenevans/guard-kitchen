@@ -27,6 +27,7 @@ module Guard
 
       @options = {
         concurrency_level: 1,
+        non_concurrent_stages: [],
         destroy_on_reload: false,
         destroy_on_exit: true
       }.merge(options)
@@ -180,8 +181,13 @@ module Guard
     end
 
     def kitchen_action(action_name, suites_regex = '.*', options = {})
+      concurrency = 1
+      unless @options[:non_concurrent_stages].include?(action_name)
+        concurrency = @options[:concurrency_level]
+      end
+
       options = {
-        concurrency: @options[:concurrency_level]
+        concurrency: concurrency
       }.merge(options)
 
       ::Kitchen::Command::Action.new([suites_regex], options, action: action_name, config: @config, shell: nil).call
