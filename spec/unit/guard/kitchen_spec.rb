@@ -387,4 +387,81 @@ describe 'Guard::Kitchen' do
       end
     end
   end
+
+  context 'with concurrency' do
+    before do
+      @action = instance_double('::Kitchen::Command::Action')
+      allow(@action).to receive(:call)
+    end
+
+    let(:kitchen) do
+      Guard::Kitchen.new(concurrency_level: 2)
+    end
+
+    describe '#start' do
+      before do
+        allow(::Kitchen).to receive(:default_file_logger).and_return('foo')
+        allow(::Kitchen).to receive(:logger=).with('foo')
+      end
+
+      it 'should pass on the concurrency value to the create kitchen command' do
+        expect(::Kitchen::Command::Action).to receive(:new)
+          .with(['.*'], {concurrency: 2}, action: 'create', config: @config, shell: nil)
+          .and_return(@action)
+        kitchen.start
+      end
+    end
+
+    describe '#stop' do
+      it 'should pass on the concurrency value to the destroy kitchen command' do
+        expect(::Kitchen::Command::Action).to receive(:new)
+          .with(['.*'], {concurrency: 2}, action: 'destroy', config: @config, shell: nil)
+          .and_return(@action)
+        kitchen.stop
+      end
+    end
+
+    describe '#run_all' do
+      it 'should pass on the concurrency value to the verify kitchen command' do
+        expect(::Kitchen::Command::Action).to receive(:new)
+          .with(['.*'], {concurrency: 2}, action: 'verify', config: @config, shell: nil)
+          .and_return(@action)
+        kitchen.run_all
+      end
+    end
+
+    describe '#run_on_changes' do
+      before do
+        @verify_action = instance_double('::Kitchen::Command::Action')
+        allow(@verify_action).to receive(:call)
+        allow(::Kitchen::Command::Action).to receive(:new)
+          .with(['.*'], {concurrency: 2}, action: 'converge', config: @config, shell: nil)
+          .and_return(@action)
+        allow(::Kitchen::Command::Action).to receive(:new)
+          .with(['.*'], {concurrency: 2}, action: 'verify', config: @config, shell: nil)
+          .and_return(@verify_action)
+      end
+
+      it 'should pass on the concurrency value to the verify kitchen command' do
+        expect(::Kitchen::Command::Action).to receive(:new)
+          .with(['(default)-.+'], {concurrency: 2}, action: 'verify', config: @config, shell: nil)
+          .and_return(@action)
+        kitchen.run_on_changes(['test/integration/default/foo.rb'])
+      end
+
+      it 'should pass on the concurrency value to the converge kitchen command' do
+        expect(::Kitchen::Command::Action).to receive(:new)
+          .with(['.*'], {concurrency: 2}, action: 'converge', config: @config, shell: nil)
+          .and_return(@action)
+        kitchen.run_on_changes(['recipes/default.rb'])
+      end
+
+      it 'should pass on the concurrency value to the post-converge verify kitchen command' do
+        expect(::Kitchen::Command::Action).to receive(:new)
+          .with(['.*'], {concurrency: 2}, action: 'verify', config: @config, shell: nil)
+          .and_return(@verify_action)
+        kitchen.run_on_changes(['recipes/default.rb'])
+      end
+    end
+  end
 end
