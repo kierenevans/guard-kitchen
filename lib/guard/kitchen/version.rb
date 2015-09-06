@@ -1,5 +1,5 @@
 module Guard
-  class Kitchen
-    VERSION = "0.0.4"
+  class KitchenVersion
+    VERSION = '1.0.0'
   end
 end

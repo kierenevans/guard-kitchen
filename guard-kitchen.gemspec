@@ -5,7 +5,7 @@ require 'guard/kitchen/version'
 
 Gem::Specification.new do |spec|
   spec.name          = "guard-kitchen"
-  spec.version       = Guard::Kitchen::VERSION
+  spec.version       = Guard::KitchenVersion::VERSION
   spec.authors       = ["Adam Jacob"]
   spec.email         = ["adam@opscode.com"]
   spec.description   = %q{Guard plugin for test kitchen}
@@ -23,4 +23,7 @@ Gem::Specification.new do |spec|
   spec.add_dependency "mixlib-shellout"
   spec.add_development_dependency "bundler", "~> 1.3"
   spec.add_development_dependency "rake"
+  spec.add_development_dependency "test-kitchen", "~> 1.4"
+  spec.add_development_dependency "kitchen-vagrant", "~> 0.18.0"
+  spec.add_development_dependency "berkshelf", "~> 3.3"
 end
