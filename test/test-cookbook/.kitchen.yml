@@ -1,0 +1,38 @@
+driver:
+  name: vagrant
+
+provisioner:
+  name: chef_solo
+
+platforms:
+  - name: centos-6.6
+
+suites:
+  - name: default
+    run_list:
+      - recipe[test-cookbook::default]
+    attributes:
+  - name: default2
+    run_list:
+      - recipe[test-cookbook::default]
+    attributes:
+  - name: default3
+    run_list:
+      - recipe[test-cookbook::default]
+    attributes:
+  - name: default4
+    run_list:
+      - recipe[test-cookbook::default]
+    attributes:
+  - name: default5
+    run_list:
+      - recipe[test-cookbook::default]
+    attributes:
+  - name: default6
+    run_list:
+      - recipe[test-cookbook::default]
+    attributes:
+  - name: default7
+    run_list:
+      - recipe[test-cookbook::default]
+    attributes:
