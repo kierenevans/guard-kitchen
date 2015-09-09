@@ -29,12 +29,13 @@ module Guard
         concurrency_level: 1,
         non_concurrent_stages: [],
         destroy_on_reload: false,
-        destroy_on_exit: true
+        destroy_on_exit: true,
+        focus_on_regex: ''
       }.merge(options)
     end
 
     def start
-      ::Kitchen.logger = ::Kitchen.default_file_logger(nil, false)
+      setup_logger
       reload_kitchen_configuration
       create
     end
@@ -74,6 +75,10 @@ module Guard
     end
 
     private
+
+    def setup_logger
+      ::Kitchen.logger = ::Kitchen.default_file_logger(nil, false)
+    end
 
     def get_available_suites
       @config.instances.map do |instance|
@@ -143,14 +148,20 @@ module Guard
       guard_kitchen_action('destroy')
     end
 
-    def kitchen_action(action_name, suites_regex = '.*', options = {})
+    def get_concurrency(action_name)
       concurrency = 1
       unless @options[:non_concurrent_stages].include?(action_name)
         concurrency = @options[:concurrency_level]
       end
+    end
+
+    def kitchen_action(action_name, suites_regex = '.*', options = {})
+      if suites_regex == '.*' && @options[:focus_on_regex]
+        suites_regex = "#{@options[:focus_on_regex]}(-.*)?$"
+      end
 
       options = {
-        concurrency: concurrency
+        concurrency: get_concurrency(action_name)
       }.merge(options)
 
       ::Kitchen::Command::Action.new([suites_regex], options, action: action_name, config: @config, shell: nil).call

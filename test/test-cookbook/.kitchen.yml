@@ -6,6 +6,7 @@ provisioner:
 
 platforms:
   - name: centos-6.6
+  - name: ubuntu-14.04
 
 suites:
   - name: default
@@ -13,26 +14,6 @@ suites:
       - recipe[test-cookbook::default]
     attributes:
   - name: default2
-    run_list:
-      - recipe[test-cookbook::default]
-    attributes:
-  - name: default3
-    run_list:
-      - recipe[test-cookbook::default]
-    attributes:
-  - name: default4
-    run_list:
-      - recipe[test-cookbook::default]
-    attributes:
-  - name: default5
-    run_list:
-      - recipe[test-cookbook::default]
-    attributes:
-  - name: default6
-    run_list:
-      - recipe[test-cookbook::default]
-    attributes:
-  - name: default7
     run_list:
       - recipe[test-cookbook::default]
     attributes:
