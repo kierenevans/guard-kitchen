@@ -50,25 +50,25 @@ describe 'Guard::Kitchen' do
 
       it 'should notify that the kitchen has been created on success' do
         expect(@action).to receive(:call)
-        expect(::Guard::Notifier).to receive(:notify).with('Kitchen created', title: 'test-kitchen', image: :success)
+        expect(::Guard::Notifier).to receive(:notify).with('Kitchen create succeeded for: all suites', title: 'test-kitchen', image: :success)
         kitchen.start
       end
 
       it 'should log that the kitchen has been created on success' do
         expect(@action).to receive(:call)
-        expect(::Guard::UI).to receive(:info).with('Kitchen create succeeded')
+        expect(::Guard::UI).to receive(:info).with('Kitchen create succeeded for: all suites')
         kitchen.start
       end
 
       it 'should notify that the kitchen create failed' do
         allow(@action).to receive(:call).and_raise(::Kitchen::UserError, 'some error message')
-        expect(::Guard::Notifier).to receive(:notify).with('Kitchen create failed', title: 'test-kitchen', image: :failed)
+        expect(::Guard::Notifier).to receive(:notify).with('Kitchen create failed for: all suites', title: 'test-kitchen', image: :failed)
         expect { kitchen.start }.to throw_symbol(:task_has_failed)
       end
 
       it 'should log that the kitchen create failed' do
         allow(@action).to receive(:call).and_raise(::Kitchen::UserError, 'some error message')
-        expect(::Guard::UI).to receive(:info).with('Kitchen create failed with some error message')
+        expect(::Guard::UI).to receive(:info).with('Kitchen create failed for: all suites with some error message')
         expect { kitchen.start }.to throw_symbol(:task_has_failed)
       end
 
@@ -104,25 +104,25 @@ describe 'Guard::Kitchen' do
 
       it 'should notify that the kitchen has been destroyed on success' do
         expect(@action).to receive(:call)
-        expect(::Guard::Notifier).to receive(:notify).with('Kitchen destroyed', title: 'test-kitchen', image: :success)
+        expect(::Guard::Notifier).to receive(:notify).with('Kitchen destroy succeeded for: all suites', title: 'test-kitchen', image: :success)
         kitchen.stop
       end
 
       it 'should log that the kitchen has been destroyed on success' do
         expect(@action).to receive(:call)
-        expect(::Guard::UI).to receive(:info).with('Kitchen destroy succeeded')
+        expect(::Guard::UI).to receive(:info).with('Kitchen destroy succeeded for: all suites')
         kitchen.stop
       end
 
       it 'should notify that the kitchen destroy failed' do
         allow(@action).to receive(:call).and_raise(::Kitchen::UserError, 'some error message')
-        expect(::Guard::Notifier).to receive(:notify).with('Kitchen destroy failed', title: 'test-kitchen', image: :failed)
+        expect(::Guard::Notifier).to receive(:notify).with('Kitchen destroy failed for: all suites', title: 'test-kitchen', image: :failed)
         expect { kitchen.stop }.to throw_symbol(:task_has_failed)
       end
 
       it 'should log that the kitchen destroy failed' do
         allow(@action).to receive(:call).and_raise(::Kitchen::UserError, 'some error message')
-        expect(::Guard::UI).to receive(:info).with('Kitchen destroy failed with some error message')
+        expect(::Guard::UI).to receive(:info).with('Kitchen destroy failed for: all suites with some error message')
         expect { kitchen.stop }.to throw_symbol(:task_has_failed)
       end
 
@@ -160,7 +160,7 @@ describe 'Guard::Kitchen' do
       end
 
       it 'should log that it is verifying' do
-        expect(::Guard::UI).to receive(:info).with('Guard::Kitchen is running all tests')
+        expect(::Guard::UI).to receive(:info).with('Guard::Kitchen is running verify for suites: all suites')
         kitchen.run_all
       end
 
@@ -178,25 +178,25 @@ describe 'Guard::Kitchen' do
 
       it 'should notify that the kitchen has been verified on success' do
         expect(@action).to receive(:call)
-        expect(::Guard::Notifier).to receive(:notify).with('Kitchen verify succeeded', title: 'test-kitchen', image: :success)
+        expect(::Guard::Notifier).to receive(:notify).with('Kitchen verify succeeded for: all suites', title: 'test-kitchen', image: :success)
         kitchen.run_all
       end
 
       it 'should log that the kitchen has been verified on success' do
         expect(@action).to receive(:call)
-        expect(::Guard::UI).to receive(:info).with('Kitchen verify succeeded')
+        expect(::Guard::UI).to receive(:info).with('Kitchen verify succeeded for: all suites')
         kitchen.run_all
       end
 
       it 'should notify that the kitchen verify failed' do
         allow(@action).to receive(:call).and_raise(::Kitchen::UserError, 'some error message')
-        expect(::Guard::Notifier).to receive(:notify).with('Kitchen verify failed', title: 'test-kitchen', image: :failed)
+        expect(::Guard::Notifier).to receive(:notify).with('Kitchen verify failed for: all suites', title: 'test-kitchen', image: :failed)
         expect { kitchen.run_all }.to throw_symbol(:task_has_failed)
       end
 
       it 'should log that the kitchen verify failed' do
         allow(@action).to receive(:call).and_raise(::Kitchen::UserError, 'some error message')
-        expect(::Guard::UI).to receive(:info).with('Kitchen verify failed with some error message')
+        expect(::Guard::UI).to receive(:info).with('Kitchen verify failed for: all suites with some error message')
         expect { kitchen.run_all }.to throw_symbol(:task_has_failed)
       end
 
@@ -214,7 +214,7 @@ describe 'Guard::Kitchen' do
       end
 
       it 'should log that it is verifying' do
-        expect(::Guard::UI).to receive(:info).with('Guard::Kitchen is running suites: default')
+        expect(::Guard::UI).to receive(:info).with('Guard::Kitchen is running verify for suites: default')
         kitchen.run_on_changes(['test/integration/default/bats/foo.bats'])
       end
 
@@ -317,25 +317,25 @@ describe 'Guard::Kitchen' do
 
         it 'should notify that the kitchen has been converged on success' do
           expect(@action).to receive(:call)
-          expect(::Guard::Notifier).to receive(:notify).with('Kitchen converge succeeded', title: 'test-kitchen', image: :success)
+          expect(::Guard::Notifier).to receive(:notify).with('Kitchen converge succeeded for: all suites', title: 'test-kitchen', image: :success)
           kitchen.run_on_changes(['recipes/default.rb'])
         end
 
         it 'should log that the kitchen has been verified on success' do
           expect(@action).to receive(:call)
-          expect(::Guard::UI).to receive(:info).with('Kitchen converge succeeded')
+          expect(::Guard::UI).to receive(:info).with('Kitchen converge succeeded for: all suites')
           kitchen.run_on_changes(['recipes/default.rb'])
         end
 
         it 'should notify that the kitchen converge failed' do
           allow(@action).to receive(:call).and_raise(::Kitchen::UserError, 'some error message')
-          expect(::Guard::Notifier).to receive(:notify).with('Kitchen converge failed', title: 'test-kitchen', image: :failed)
+          expect(::Guard::Notifier).to receive(:notify).with('Kitchen converge failed for: all suites', title: 'test-kitchen', image: :failed)
           expect { kitchen.run_on_changes(['recipes/default.rb']) }.to throw_symbol(:task_has_failed)
         end
 
         it 'should log that the kitchen converge failed' do
           allow(@action).to receive(:call).and_raise(::Kitchen::UserError, 'some error message')
-          expect(::Guard::UI).to receive(:info).with('Kitchen converge failed with some error message')
+          expect(::Guard::UI).to receive(:info).with('Kitchen converge failed for: all suites with some error message')
           expect { kitchen.run_on_changes(['recipes/default.rb']) }.to throw_symbol(:task_has_failed)
         end
 
@@ -345,7 +345,7 @@ describe 'Guard::Kitchen' do
         end
 
         it 'should log that it is verifying' do
-          expect(::Guard::UI).to receive(:info).with('Guard::Kitchen is running all tests')
+          expect(::Guard::UI).to receive(:info).with('Guard::Kitchen is running verify for suites: all suites')
           kitchen.run_on_changes(['recipes/default.rb'])
         end
 
@@ -358,25 +358,25 @@ describe 'Guard::Kitchen' do
 
         it 'should notify that the kitchen has been verified on success' do
           expect(@verify_action).to receive(:call)
-          expect(::Guard::Notifier).to receive(:notify).with('Kitchen verify succeeded', title: 'test-kitchen', image: :success)
+          expect(::Guard::Notifier).to receive(:notify).with('Kitchen verify succeeded for: all suites', title: 'test-kitchen', image: :success)
           kitchen.run_on_changes(['recipes/default.rb'])
         end
 
         it 'should log that the kitchen has been verified on success' do
           expect(@verify_action).to receive(:call)
-          expect(::Guard::UI).to receive(:info).with('Kitchen verify succeeded')
+          expect(::Guard::UI).to receive(:info).with('Kitchen verify succeeded for: all suites')
           kitchen.run_on_changes(['recipes/default.rb'])
         end
 
         it 'should notify that the kitchen verify failed' do
           allow(@verify_action).to receive(:call).and_raise(::Kitchen::UserError, 'some error message')
-          expect(::Guard::Notifier).to receive(:notify).with('Kitchen verify failed', title: 'test-kitchen', image: :failed)
+          expect(::Guard::Notifier).to receive(:notify).with('Kitchen verify failed for: all suites', title: 'test-kitchen', image: :failed)
           expect { kitchen.run_on_changes(['recipes/default.rb']) }.to throw_symbol(:task_has_failed)
         end
 
         it 'should log that the kitchen verify failed' do
           allow(@verify_action).to receive(:call).and_raise(::Kitchen::UserError, 'some error message')
-          expect(::Guard::UI).to receive(:info).with('Kitchen verify failed with some error message')
+          expect(::Guard::UI).to receive(:info).with('Kitchen verify failed for: all suites with some error message')
           expect { kitchen.run_on_changes(['recipes/default.rb']) }.to throw_symbol(:task_has_failed)
         end
 

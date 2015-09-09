@@ -75,6 +75,12 @@ module Guard
 
     private
 
+    def get_available_suites
+      @config.instances.map do |instance|
+        instance.name
+      end
+    end
+
     def get_affected_suites(paths)
       suites = {}
       paths.each do |path|
@@ -89,6 +95,7 @@ module Guard
       paths.each do |path|
         return true if path =~ %r{\.kitchen.*\.yml}
       end
+      false
     end
 
     def reload_kitchen_configuration
@@ -116,68 +123,24 @@ module Guard
     end
 
     def converge
-      log_plugin_info('is converging all suites')
-      begin
-        kitchen_action('converge')
-        notify('converge succeeded', true)
-        log_kitchen_info('converge succeeded')
-      rescue StandardError => e
-        notify('converge failed', false)
-        log_kitchen_info("converge failed with #{e.to_s}")
-        throw :task_has_failed
-      end
+      guard_kitchen_action('converge')
     end
 
     def verify
-      log_plugin_info('is running all tests')
-      begin
-        kitchen_action('verify')
-        notify('verify succeeded', true)
-        log_kitchen_info('verify succeeded')
-      rescue StandardError => e
-        notify('verify failed', false)
-        log_kitchen_info("verify failed with #{e.to_s}")
-        throw :task_has_failed
-      end
+      guard_kitchen_action('verify')
     end
 
     def verify_suites(suites)
-      suites_message = suites.keys.join(', ')
-      log_plugin_info("is running suites: #{suites_message}")
-      begin
-        kitchen_action('verify', "(#{suites.keys.join('|')})-.+")
-        notify("verify succeeded for: #{suites_message}", true)
-        log_kitchen_info("verify succeeded for: #{suites_message}")
-      rescue StandardError => e
-        notify("verify failed for: #{suites_message}", false)
-        log_kitchen_info("verify failed for: #{suites_message} with #{e.to_s}")
-        throw :task_has_failed
-      end
+      guard_kitchen_action('verify', suites)
     end
 
     def create
       log_plugin_info('is starting')
-      begin
-        kitchen_action('create')
-        notify('created', true)
-        log_kitchen_info('create succeeded')
-      rescue StandardError => e
-        notify('create failed', false)
-        log_kitchen_info("create failed with #{e.to_s}")
-        throw :task_has_failed
-      end
+      guard_kitchen_action('create')
     end
 
     def destroy
-      begin
-        kitchen_action('destroy')
-        notify('destroyed', true)
-        log_kitchen_info('destroy succeeded')
-      rescue StandardError => e
-        notify('destroy failed', false)
-        log_kitchen_info("destroy failed with #{e.to_s}")
-        throw :task_has_failed
-      end
+      guard_kitchen_action('destroy')
     end
 
     def kitchen_action(action_name, suites_regex = '.*', options = {})
@@ -191,6 +154,32 @@ module Guard
       }.merge(options)
 
       ::Kitchen::Command::Action.new([suites_regex], options, action: action_name, config: @config, shell: nil).call
+    end
+
+    def guard_kitchen_action(action, suites = nil)
+      if suites
+        suites_message = suites.keys.join(', ')
+        suites_regex = "(#{suites.keys.join('|')})-.+"
+      else
+        suites_message = 'all suites'
+        suites_regex = '.*'
+      end
+
+      log_plugin_info("is running #{action} for suites: #{suites_message}")
+      begin
+        kitchen_action(action, suites_regex)
+        notify("#{action} succeeded for: #{suites_message}", true)
+        log_kitchen_info("#{action} succeeded for: #{suites_message}")
+      rescue StandardError => e
+        notify("#{action} failed for: #{suites_message}", false)
+        log_kitchen_info("#{action} failed for: #{suites_message} with #{e.to_s}")
+        throw :task_has_failed
+      rescue Exception => e
+        available_suites = get_available_suites
+        notify("#{action} failed for: #{suites_message}. Do these suites exist?", false)
+        log_kitchen_info("#{action} failed for: #{suites_message} as one or more did not exist. Available suites: #{available_suites.join(', ')}")
+        throw :task_has_failed
+      end
     end
   end
 end
