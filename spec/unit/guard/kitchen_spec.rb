@@ -8,7 +8,10 @@ describe 'Guard::Kitchen' do
     allow(::Guard::Notifier).to receive(:notify)
 
     @config = instance_double('::Kitchen::Config')
-    allow(::Kitchen::Config).to receive(:new).and_return(@config)
+
+    @loader = instance_double('::Kitchen::Loader::YAML')
+    allow(::Kitchen::Loader::YAML).to receive(:new).and_return(@loader)
+    allow(::Kitchen::Config).to receive(:new).with(loader: @loader).and_return(@config)
   end
 
   context 'default parameters' do
@@ -26,7 +29,7 @@ describe 'Guard::Kitchen' do
       end
 
       it 'should ask for a new kitchen configuration' do
-        expect(::Kitchen::Config).to receive(:new).and_return(@config)
+        expect(::Kitchen::Config).to receive(:new).with(loader: @loader).and_return(@config)
         kitchen.start
       end
 

@@ -105,7 +105,14 @@ module Guard
 
     def reload_kitchen_configuration
       ::Guard::UI.info("Guard::Kitchen is using the new kitchen configuration")
-      @config = ::Kitchen::Config.new
+      @loader = ::Kitchen::Loader::YAML.new(
+        :project_config => ENV['KITCHEN_YAML'],
+        :local_config => ENV['KITCHEN_LOCAL_YAML'],
+        :global_config => ENV['KITCHEN_GLOBAL_YAML']
+      )
+      @config = ::Kitchen::Config.new(
+        :loader => @loader
+      )
     end
 
     def log_plugin_info(message)
@@ -156,7 +163,7 @@ module Guard
     end
 
     def kitchen_action(action_name, suites_regex = '.*', options = {})
-      if suites_regex == '.*' && @options[:focus_on_regex]
+      if suites_regex == '.*' && @options[:focus_on_regex] != ''
         suites_regex = "#{@options[:focus_on_regex]}(-.*)?$"
       end
 
