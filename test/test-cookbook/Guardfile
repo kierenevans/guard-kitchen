@@ -1,4 +1,4 @@
-guard :kitchen, concurrency_level: 1, focus_on_regex: '', non_concurrent_stages: [], destroy_on_reload: false, destroy_on_exit: true do
+guard :kitchen, concurrency_level: 2, focus_on_regex: 'centos', non_concurrent_stages: [], destroy_on_reload: false, destroy_on_exit: false do
   watch(%r{^attributes/(.+)\.rb$})
   watch(%r{^definitions/(.+)\.rb$})
   watch(%r{^files/(.+)})

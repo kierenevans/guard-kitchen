@@ -14,97 +14,189 @@
 # limitations under the License.
 #
 
-require "guard/compat/plugin"
-require "mixlib/shellout"
+require 'guard/compat/plugin'
+require 'kitchen'
+require 'kitchen/command'
+require 'kitchen/command/action'
 
 module Guard
   class Kitchen < Plugin
+
+    def initialize(options = {})
+      super
+
+      @options = {
+        concurrency_level: 1,
+        non_concurrent_stages: [],
+        destroy_on_reload: false,
+        destroy_on_exit: true,
+        focus_on_regex: ''
+      }.merge(options)
+    end
+
     def start
-      ::Guard::UI.info("Guard::Kitchen is starting")
-      cmd = Mixlib::ShellOut.new("kitchen create", :timeout => 10800, :env => { 'LC_ALL' => ENV['LC_ALL'] })
-      cmd.live_stream = STDOUT
-      cmd.run_command
-      begin
-        cmd.error!
-        Notifier.notify('Kitchen created', :title => 'test-kitchen', :image => :success)
-      rescue Mixlib::ShellOut::ShellCommandFailed => e
-        Notifier.notify('Kitchen create failed', :title => 'test-kitchen', :image => :failed)
-        ::Guard::UI.info("Kitchen failed with #{e.to_s}")
-        throw :task_has_failed
-      end
+      setup_logger
+      reload_kitchen_configuration
+      create
     end
 
     def stop
-      ::Guard::UI.info("Guard::Kitchen is stopping")
-      cmd = Mixlib::ShellOut.new("kitchen destroy", :timeout => 10800, :env => { 'LC_ALL' => ENV['LC_ALL'] })
-      cmd.live_stream = STDOUT
-      cmd.run_command
-      begin
-       cmd.error!
-       Notifier.notify('Kitchen destroyed', :title => 'test-kitchen', :image => :success)
-      rescue Mixlib::ShellOut::ShellCommandFailed => e
-        Notifier.notify('Kitchen destroy failed', :title => 'test-kitchen', :image => :failed)
-       ::Guard::UI.info("Kitchen failed with #{e.to_s}")
-       throw :task_has_failed
+      log_plugin_info('is stopping')
+      unless @options[:destroy_on_exit]
+        log_plugin_info('is skipping the destroy step')
+        notify('destroy skipped', nil)
+        return
       end
+
+      reload_kitchen_configuration unless @config
+      destroy
     end
 
     def reload
-      stop
+      stop if @options[:destroy_on_reload]
       start
     end
 
     def run_all
-      ::Guard::UI.info("Guard::Kitchen is running all tests")
-      cmd = Mixlib::ShellOut.new("kitchen verify", :timeout => 10800, :env => { 'LC_ALL' => ENV['LC_ALL'] })
-      cmd.live_stream = STDOUT
-      cmd.run_command
-      begin
-        cmd.error!
-        Notifier.notify('Kitchen verify succeeded', :title => 'test-kitchen', :image => :success)
-        ::Guard::UI.info("Kitchen verify succeeded")
-      rescue Mixlib::ShellOut::ShellCommandFailed => e
-        Notifier.notify('Kitchen verify failed', :title => 'test-kitchen', :image => :failed)
-        ::Guard::UI.info("Kitchen verify failed with #{e.to_s}")
-        throw :task_has_failed
-      end
+      reload_kitchen_configuration unless @config
+      verify
     end
 
     def run_on_changes(paths)
+      suites = get_affected_suites(paths)
+      reload_kitchen_configuration if kitchen_configuration_changed?(paths) || !@config
+
+      if suites.length > 0
+        verify_suites(suites)
+      else
+        converge
+        verify
+      end
+    end
+
+    private
+
+    def setup_logger
+      ::Kitchen.logger = ::Kitchen.default_file_logger(nil, false)
+    end
+
+    def get_available_suites
+      @config.instances.map do |instance|
+        instance.name
+      end
+    end
+
+    def get_affected_suites(paths)
       suites = {}
       paths.each do |path|
-        if path =~ /test\/integration\/(.+?)\/.+/
+        if path =~ %r{test/integration/(.+?)/.+}
           suites[$1] = true
         end
       end
-      if suites.length > 0
-        ::Guard::UI.info("Guard::Kitchen is running suites: #{suites.keys.join(', ')}")
-        cmd = Mixlib::ShellOut.new("kitchen verify '(#{suites.keys.join('|')})-.+' -p", :timeout => 10800, :env => { 'LC_ALL' => ENV['LC_ALL'] })
-        cmd.live_stream = STDOUT
-        cmd.run_command
-        begin
-          cmd.error!
-          Notifier.notify("Kitchen verify succeeded for: #{suites.keys.join(', ')}", :title => 'test-kitchen', :image => :success)
-          ::Guard::UI.info("Kitchen verify succeeded for: #{suites.keys.join(', ')}")
-        rescue Mixlib::ShellOut::ShellCommandFailed => e
-          Notifier.notify("Kitchen verify failed for: #{suites.keys.join(', ')}", :title => 'test-kitchen', :image => :failed)
-          ::Guard::UI.info("Kitchen verify failed with #{e.to_s}")
-          throw :task_has_failed
-        end
+      suites
+    end
+
+    def kitchen_configuration_changed?(paths)
+      paths.each do |path|
+        return true if path =~ %r{\.kitchen.*\.yml}
+      end
+      false
+    end
+
+    def reload_kitchen_configuration
+      ::Guard::UI.info("Guard::Kitchen is using the new kitchen configuration")
+      @loader = ::Kitchen::Loader::YAML.new(
+        :project_config => ENV['KITCHEN_YAML'],
+        :local_config => ENV['KITCHEN_LOCAL_YAML'],
+        :global_config => ENV['KITCHEN_GLOBAL_YAML']
+      )
+      @config = ::Kitchen::Config.new(
+        :loader => @loader
+      )
+    end
+
+    def log_plugin_info(message)
+      ::Guard::UI.info("Guard::Kitchen #{message}")
+    end
+
+    def log_kitchen_info(message)
+      ::Guard::UI.info("Kitchen #{message}")
+    end
+
+    def notify(message, success)
+      if success
+        image = :success
+      elsif success.nil?
+        image = :skipped
       else
-        ::Guard::UI.info("Guard::Kitchen is running converge for all suites")
-        cmd = Mixlib::ShellOut.new("kitchen converge", :timeout => 10800, :env => { 'LC_ALL' => ENV['LC_ALL'] })
-        cmd.live_stream = STDOUT
-        cmd.run_command
-        begin
-          cmd.error!
-          Notifier.notify("Kitchen converge succeeded", :title => 'test-kitchen', :image => :success)
-          ::Guard::UI.info("Kitchen converge succeeded")
-        rescue Mixlib::ShellOut::ShellCommandFailed => e
-          Notifier.notify("Kitchen converge failed", :title => 'test-kitchen', :image => :failed)
-          ::Guard::UI.info("Kitchen converge failed with #{e.to_s}")
-          throw :task_has_failed
-        end
+        image = :failed
+      end
+      Notifier.notify("Kitchen #{message}", title: 'test-kitchen', image: image)
+    end
+
+    def converge
+      guard_kitchen_action('converge')
+    end
+
+    def verify
+      guard_kitchen_action('verify')
+    end
+
+    def verify_suites(suites)
+      guard_kitchen_action('verify', suites)
+    end
+
+    def create
+      log_plugin_info('is starting')
+      guard_kitchen_action('create')
+    end
+
+    def destroy
+      guard_kitchen_action('destroy')
+    end
+
+    def get_concurrency(action_name)
+      concurrency = 1
+      unless @options[:non_concurrent_stages].include?(action_name)
+        concurrency = @options[:concurrency_level]
+      end
+    end
+
+    def kitchen_action(action_name, suites_regex = '.*', options = {})
+      if suites_regex == '.*' && @options[:focus_on_regex] != ''
+        suites_regex = "#{@options[:focus_on_regex]}(-.*)?$"
+      end
+
+      options = {
+        concurrency: get_concurrency(action_name)
+      }.merge(options)
+
+      ::Kitchen::Command::Action.new([suites_regex], options, action: action_name, config: @config, shell: nil).call
+    end
+
+    def guard_kitchen_action(action, suites = nil)
+      if suites
+        suites_message = suites.keys.join(', ')
+        suites_regex = "(#{suites.keys.join('|')})-.+"
+      else
+        suites_message = 'all suites'
+        suites_regex = '.*'
+      end
+
+      log_plugin_info("is running #{action} for suites: #{suites_message}")
+      begin
+        kitchen_action(action, suites_regex)
+        notify("#{action} succeeded for: #{suites_message}", true)
+        log_kitchen_info("#{action} succeeded for: #{suites_message}")
+      rescue StandardError => e
+        notify("#{action} failed for: #{suites_message}", false)
+        log_kitchen_info("#{action} failed for: #{suites_message} with #{e.to_s}")
+        throw :task_has_failed
+      rescue Exception => e
+        available_suites = get_available_suites
+        notify("#{action} failed for: #{suites_message}. Do these suites exist?", false)
+        log_kitchen_info("#{action} failed for: #{suites_message} as one or more did not exist. Available suites: #{available_suites.join(', ')}")
+        throw :task_has_failed
       end
     end
   end

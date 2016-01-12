@@ -6,8 +6,9 @@ gemspec
 group :test do
   gem "guard"
   gem "guard-rspec"
-  gem "ruby_gntp"
   gem 'rb-inotify', :require => false
   gem 'rb-fsevent', :require => false
   gem 'rb-fchange', :require => false
+  # OSX notifications
+  gem 'terminal-notifier-guard', '~> 1.6.4'
 end
